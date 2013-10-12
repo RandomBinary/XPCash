@@ -1,0 +1,14 @@
+name: XPCash
+main: pl.rar.minecraft.xpcash.Main
+version: 1.0
+author: daniovision
+website: minecraft.rar.pl
+database: false
+commands:
+   xpcash:
+      description: Buy server cash for your XP.
+      usage: /xpcash
+permissions:
+   xpcash.buy:
+      description: Allows access to /xpcash
+      default: false
