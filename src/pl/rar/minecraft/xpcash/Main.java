@@ -1,13 +1,14 @@
 package pl.rar.minecraft.xpcash;
 
-	import java.util.logging.Logger;
+	import java.io.File;
+import java.util.logging.Logger;
 
 import net.milkbowl.vault.economy.Economy;
 import net.milkbowl.vault.economy.EconomyResponse;
 import net.milkbowl.vault.permission.Permission;
 
 import org.bukkit.ChatColor;
-	import org.bukkit.command.Command;
+import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.RegisteredServiceProvider;
@@ -21,17 +22,27 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 	    @Override
 	    public void onDisable() {
-	        log.info(String.format("[%s] Disabled Version %s", getDescription().getName(), getDescription().getVersion()));
+	    	
 	    }
 
 	    @Override
 	    public void onEnable() {
 	        if (!setupEconomy() ) {
-	            log.severe(String.format("[%s] - Disabled due to no Vault dependency found!", getDescription().getName()));
+	            log.severe("[XPCash] Vault was not found, disabling XPCash.");
 	            getServer().getPluginManager().disablePlugin(this);
 	            return;
 	        }
 	        setupPermissions();
+	        File file = new File(getDataFolder() + File.separator + "config.yml");
+	        
+	        if(!file.exists()){
+		        log.info("[XPCash] No config found, generating a new one...");
+		        this.getConfig().addDefault("PurchaseSuccesful", "You purchased %s for your XP.");
+		        this.getConfig().addDefault("NewBalance", "Now you have %s.");
+		        this.getConfig().addDefault("NotEnoughXP", "You need at least 1 XP level to use /xpcash");
+		        this.getConfig().options().copyDefaults(true);
+		        this.saveConfig();
+	        }
 	    }
 
 	    private boolean setupEconomy() {
@@ -66,12 +77,13 @@ import org.bukkit.plugin.java.JavaPlugin;
 	        			EconomyResponse r = econ.depositPlayer(player.getName(), player.getLevel());
 	    	            if(r.transactionSuccess()) {
 	    	            	player.setLevel(0);
-	    	                sender.sendMessage(String.format(ChatColor.AQUA + "[XPCash] " + ChatColor.GREEN + "You purchased %s for your XP, now you have %s!", econ.format(r.amount), econ.format(r.balance)));
+	    	                sender.sendMessage(String.format(ChatColor.AQUA + "[XPCash] " + ChatColor.GREEN + this.getConfig().getString("PurchaseSuccesful"), econ.format(r.amount)));
+	    	                sender.sendMessage(String.format(ChatColor.AQUA + "[XPCash] " + ChatColor.GREEN + this.getConfig().getString("NewBalance"), econ.format(r.balance)));
 	    	            } else {
 	    	                sender.sendMessage(String.format("Error: %s", r.errorMessage));
 	    	            }
 	        		} else if (player.getLevel() <= 0) {
-	        			sender.sendMessage(ChatColor.AQUA + "[XPCash] " + ChatColor.RED + "You need at least 1 XP level to use XPCash!");
+	        			sender.sendMessage(ChatColor.AQUA + "[XPCash] " + ChatColor.RED + this.getConfig().getString("NotEnoughXP"));
 	        		}
 } else {
 	sender.sendMessage(ChatColor.RED + "Sorry, you don't have permission.");
